@@ -1,0 +1,136 @@
+/* Local Latin subsets; OFL copyright and notices accompany the sources and the offline HTML. */
+@font-face{font-family:Lexend;font-style:normal;font-weight:100 900;font-display:swap;src:url(./fonts/Lexend/lexend-latin-wght-normal.woff2) format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 800;font-display:swap;src:url(./fonts/JetBrainsMono/jetbrains-mono-latin-wght-normal.woff2) format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url(./fonts/Atkinson/atkinson-hyperlegible-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url(./fonts/Atkinson/atkinson-hyperlegible-latin-700-normal.woff2) format('woff2')}
+/* KSS NetLab design tokens + shared primitives. Owned by the orchestrator: UI agents use these, and add
+   component-specific CSS in their own files. Do not redefine tokens elsewhere. */
+:root {
+  /* type */
+  --font-ui: 'Lexend', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-scale: 1;                       /* user setting 0.85 … 1.4 */
+  --fs-xs: calc(12px * var(--fs-scale));
+  --fs-sm: calc(14px * var(--fs-scale));
+  --fs-md: calc(16px * var(--fs-scale));
+  --fs-lg: calc(18px * var(--fs-scale));
+  --fs-xl: calc(22px * var(--fs-scale));
+  --fs-2xl: calc(30px * var(--fs-scale));
+  --lh: 1.6;
+  /* surfaces: neutral engineering-tool greys */
+  --bg: #f4f5f7;          /* app chrome */
+  --bench: #e9ecf0;       /* canvas */
+  --card: #ffffff;
+  --sunken: #f7f8fa;      /* insets, table heads, code */
+  --ink: #18202c;
+  --ink-soft: #4d5868;    /* 7.0:1 on --bg */
+  --line: #d8dde4;
+  --line-strong: #b4bcc8;
+  --accent: #0b4f8a;      /* primary action / selection */
+  --accent-ink: #ffffff;
+  --accent-bg: #e6eef7;
+  --chrome: #1b2433;      /* title bars, top bar */
+  --chrome-2: #263247;
+  --chrome-ink: #e8edf5;
+  --chrome-dim: #a7b2c4;
+  --chrome-line: #34425a;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 12px rgba(16,24,40,.08);
+  --shadow-lg: 0 2px 6px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.18);
+  --radius: 6px;
+  --radius-sm: 4px;
+  --focus: #1d6fd8;
+  /* status */
+  --ok: #166534;   --ok-bg: #e7f5ec;
+  --bad: #a1162b;  --bad-bg: #fbeaec;
+  --warn: #8a5300; --warn-bg: #fdf4e3;
+  --info: #0b4f8a; --info-bg: #e6eef7;
+  /* terminal */
+  --term-bg: #0f141c; --term-ink: #e3e8ef; --term-dim: #8a96a8; --term-accent: #7fd1a0;
+  --term-fs: 14px;                      /* user setting */
+  /* feature colours: --f-<feature> (strong) and --f-<feature>-bg (tint). Always pair colour with a text label. */
+  --f-cabling: #8a5a00;   --f-cabling-bg: color-mix(in srgb, var(--f-cabling) 8%, #fff);
+  --f-console: #0b6a8f;   --f-console-bg: color-mix(in srgb, var(--f-console) 8%, #fff);
+  --f-system: #475569;    --f-system-bg: color-mix(in srgb, var(--f-system) 8%, #fff);
+  --f-interface: #1d4ed8; --f-interface-bg: color-mix(in srgb, var(--f-interface) 8%, #fff);
+  --f-routing: #4338ca;   --f-routing-bg: color-mix(in srgb, var(--f-routing) 8%, #fff);
+  --f-dhcp: #0369a1;      --f-dhcp-bg: color-mix(in srgb, var(--f-dhcp) 8%, #fff);
+  --f-acl: #b4232c;       --f-acl-bg: color-mix(in srgb, var(--f-acl) 8%, #fff);
+  --f-nat: #15703a;       --f-nat-bg: color-mix(in srgb, var(--f-nat) 8%, #fff);
+  --f-ipsec: #7a22c4;     --f-ipsec-bg: color-mix(in srgb, var(--f-ipsec) 8%, #fff);
+  --f-qos: #b9460c;       --f-qos-bg: color-mix(in srgb, var(--f-qos) 8%, #fff);
+  --f-vty: #0f6f68;       --f-vty-bg: color-mix(in srgb, var(--f-vty) 8%, #fff);
+  --f-snmp: #0f6f68;      --f-snmp-bg: color-mix(in srgb, var(--f-snmp) 8%, #fff);
+  --f-syslog: #0f6f68;    --f-syslog-bg: color-mix(in srgb, var(--f-syslog) 8%, #fff);
+  --f-switching: #475569; --f-switching-bg: color-mix(in srgb, var(--f-switching) 8%, #fff);
+  --f-pc: #9d174d;        --f-pc-bg: color-mix(in srgb, var(--f-pc) 8%, #fff);
+  --f-verify: #334155;    --f-verify-bg: color-mix(in srgb, var(--f-verify) 8%, #fff);
+  /* cables (colour + line style + label, never colour alone) */
+  --cable-straight: #18202c;   /* solid */
+  --cable-crossover: #d9480f;  /* dashed */
+  --cable-serial: #c1121f;     /* thick, lightning/zigzag marker */
+  --cable-console: #38a3d1;    /* thin light blue, like the real rollover cable */
+  --led-green: #22a35a; --led-amber: #e39b0b; --led-off: #9aa3af;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: var(--fs-md); line-height: var(--lh); letter-spacing: 0; -webkit-font-smoothing: antialiased; }
+body.font-atkinson { --font-ui: 'Atkinson Hyperlegible', system-ui, sans-serif; }
+body.font-system { --font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+h1, h2, h3 { line-height: 1.25; margin: 0; font-weight: 600; letter-spacing: -.005em; }
+h4 { font-weight: 600; }
+strong, b { font-weight: 600; }
+p { margin: 0; }
+code, kbd, .mono { font-family: var(--font-mono); font-size: .92em; }
+code { background: var(--sunken); border: 1px solid var(--line); padding: 0 5px; border-radius: 3px; }
+
+.ico { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.15em; display: inline-block; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--line-strong); background: var(--card); border-radius: var(--radius-sm); padding: 6px 14px; font-weight: 500; font-size: var(--fs-sm); line-height: 1.3; box-shadow: 0 1px 1px rgba(16,24,40,.04); transition: background .12s, border-color .12s; }
+.btn:hover:not(:disabled) { border-color: var(--ink-soft); background: var(--sunken); }
+.btn:active:not(:disabled) { background: var(--bench); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover:not(:disabled) { background: #093f6f; border-color: #093f6f; }
+.btn-primary:active:not(:disabled) { background: #07325a; }
+.btn-ghost { border-color: transparent; background: transparent; box-shadow: none; }
+.btn-ghost:hover:not(:disabled) { background: rgba(24,32,44,.06); border-color: transparent; }
+.btn-lg { padding: 10px 20px; font-size: var(--fs-md); font-weight: 600; }
+.btn-sm { padding: 3px 9px; font-size: var(--fs-xs); }
+.btn-danger { border-color: var(--bad); color: var(--bad); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 3px; padding: 1px 8px; font-size: var(--fs-xs); font-weight: 600; border: 1px solid currentColor; white-space: nowrap; }
+.badge[data-feature] { color: var(--ink); background: var(--card); border-color: var(--line-strong); }
+.badge[data-feature]::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--fc); flex: none; }
+[data-feature='cabling'] { --fc: var(--f-cabling); --fc-bg: var(--f-cabling-bg); }
+[data-feature='console'] { --fc: var(--f-console); --fc-bg: var(--f-console-bg); }
+[data-feature='system'] { --fc: var(--f-system); --fc-bg: var(--f-system-bg); }
+[data-feature='interface'] { --fc: var(--f-interface); --fc-bg: var(--f-interface-bg); }
+[data-feature='routing'] { --fc: var(--f-routing); --fc-bg: var(--f-routing-bg); }
+[data-feature='dhcp'] { --fc: var(--f-dhcp); --fc-bg: var(--f-dhcp-bg); }
+[data-feature='acl'] { --fc: var(--f-acl); --fc-bg: var(--f-acl-bg); }
+[data-feature='nat'] { --fc: var(--f-nat); --fc-bg: var(--f-nat-bg); }
+[data-feature='ipsec'] { --fc: var(--f-ipsec); --fc-bg: var(--f-ipsec-bg); }
+[data-feature='qos'] { --fc: var(--f-qos); --fc-bg: var(--f-qos-bg); }
+[data-feature='vty'] { --fc: var(--f-vty); --fc-bg: var(--f-vty-bg); }
+[data-feature='snmp'] { --fc: var(--f-snmp); --fc-bg: var(--f-snmp-bg); }
+[data-feature='syslog'] { --fc: var(--f-syslog); --fc-bg: var(--f-syslog-bg); }
+[data-feature='switching'] { --fc: var(--f-switching); --fc-bg: var(--f-switching-bg); }
+[data-feature='pc'] { --fc: var(--f-pc); --fc-bg: var(--f-pc-bg); }
+[data-feature='verify'] { --fc: var(--f-verify); --fc-bg: var(--f-verify-bg); }
+
+.field { display: grid; gap: 5px; font-size: var(--fs-sm); font-weight: 500; }
+.field input, .field select, .field textarea, .input { border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 6px 10px; background: #fff; font-weight: 400; }
+.field input:focus, .field select:focus, .field textarea:focus, .input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(29,111,216,.18); outline: none; }
+.note { border: 1px solid color-mix(in srgb, var(--info) 30%, var(--line)); border-left: 3px solid var(--info); background: var(--info-bg); border-radius: var(--radius-sm); padding: 10px 14px; }
+.note.ok { border-color: color-mix(in srgb, var(--ok) 30%, var(--line)); border-left-color: var(--ok); background: var(--ok-bg); }
+.note.bad { border-color: color-mix(in srgb, var(--bad) 30%, var(--line)); border-left-color: var(--bad); background: var(--bad-bg); }
+.note.warn { border-color: color-mix(in srgb, var(--warn) 30%, var(--line)); border-left-color: var(--warn); background: var(--warn-bg); }
+.muted { color: var(--ink-soft); }
+.stack { display: grid; gap: 16px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { animation: none !important; transition: none !important; }

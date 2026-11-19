@@ -1,0 +1,2 @@
+PASS: offline file:// bundle; imported LabApi-solved case, Catalyst device-support search, NAT/ESP ping trace and reply, 121.6 kbps QoS estimate, 18/18 modeled report + advisory and grade-time profile. No external loads or runtime errors.
+4b6568759e9f073804d3faae6e1c48ed259eb5b1335c24eedfa5e9aff553dbc1

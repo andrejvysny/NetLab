@@ -1,0 +1,188 @@
+Prípadová štúdia
+
+
+
+
+Zrealizujte zapojenie podľa uvedenej topológie. Následne uskutočnite konfiguráciu podľa
+uvedených bodov:
+
+   1. Počítače PC2 a PC3 majú IP adresu pridelenú DHCP serverom, PC1 má pridelenú statickú
+      IP adresu. Iba 1 smerovač nakonfigurujte ako DHCP server (pri výbere zohľadnite bod 4).
+      Pre sieť LAN1 neprideľujte prvých 100 použiteľných IP adries.
+   2. Na prepojenie dvoch smerovačov je použitá P2P linka s maskou /30, sieť LAN1 má
+      masku /24, LAN2 má masku /26.
+   3. Predpokladá sa komunikácia v rámci LAN1 a LAN2, medzi sieťami LAN1 a LAN2 a taktiež
+      medzi virtuálnymi rozhraniami na smerovačoch.
+   4. Počítače v sieti LAN1 používajú privátnu sieť triedy C, navonok však vystupujú ako
+      verejná IP adresa(y). S ohľadom na ďalšie úlohy zabezpečte, aby všetky počítače
+      používali verejnú IP adresu (IP adresa zo siete WAN1, viac paralelných komunikácií do
+      vonkajších sietí) a počítač PC1 (MS) bol prístupný v prípade komunikácie iniciovanej
+      zvonku (na tento účel použite rozhranie Loopback100).
+   5. Smerovače nepoužívajú smerovací protokol pričom musia mať v smerovacej tabuľke
+      okrem priamo pripojených sietí iba jeden ďalší záznam.
+6. Počítač PC1 nemôže komunikovať so sieťou Loopback0 na smerovači R2.
+7. Počítač PC2 nemôže komunikovať so sieťou LAN2 inak ako prostredníctvom ICMP alebo
+    HTTP.
+8. Medzi smerovačmi R1 a R2 šifrujte nasledovnú komunikáciu:
+        o telnet
+        o SSH
+        o ICMP
+        o Sieťový manažment (UDP 161, 162)
+9. ICMP a FTP komunikácia medzi stanicami PC1 a PC3 odchádza šifrovaná už z týchto
+    staníc (pozn. Keďže stanica PC3 používa dynamickú IP adresu, použite aktuálne
+    pridelenú IP adresu).
+10. Linku medzi smerovačmi R1 a R2 fyzicky obmedzte na rýchlosť 128 kbit/s. Na tejto linke
+    zabezpečte kvalitu služieb v oboch smeroch podľa nasledujúcich požiadaviek:
+        o ICMP traffic bude mať garantovaných prioritných 16 kbit/s
+        o Telnet, SSH a sieťový manažment budú mať garantovanú šírku pásma aspoň 48
+            kbit/s
+        o Iné komunikácie sa budú o dostupnú šírku pásma deliť mechanizmom WFQ
+        o Celú komunikáciu tvarujte (shape) na 95 % fyzickej rýchlosti.
+11. Na oboch smerovačoch umožnite vzdialený prístup prostredníctvom protokolu telnet.
+    Tento prístup však bude možný iba zo stanice PC1 (MS).
+12. Na oboch smerovačoch sprístupnite SNMP MIB na čítanie a zápis. Čítanie je povolené zo
+    staníc PC1 a PC3, zatiaľ čo zápis je povolený iba zo stanice PC1.
+13. Na oboch smerovačoch umožnite odosielanie systémových správ na stanicu PC1 (MS) so
+    zdrojovou IP adresou rozhrania loopback0.
+Riešenie:
+
+1. DHCP server na R1 kvôli NAT, exclude .1 až .100 nakoľko prvých 100 použiteľných adries
+   sa neprideľuje
+
+   ip dhcp excluded‐address 192.168.100.1 192.168.100.100
+   !
+   ip dhcp pool LAN1
+     network 192.168.100.0 255.255.255.0
+     default‐router 192.168.100.1
+   !
+   ip dhcp pool LAN2
+     network 60.50.40.0 255.255.255.192
+     default‐router 60.50.40.1
+
+
+   R2 LAN rozhranie:
+   ip helper‐address R1_WAN_IP
+
+
+2. /24 – 255.255.255.0, /26 – 255.255.255.192. /30 – 255.255.255.252
+
+3. Musí byť spustené smerovanie – ip routing.
+
+4. Nakonfigurovať pre LAN1 NAT overload (prekladané na WAN rozhranie) a pre stanicu
+   PC1 (MS) nakonfigurovať statické NAT na IP adresu rozhrania Loopback100.
+
+5. Použiť na oboch smerovačoch „default“ cestu – ip route 0.0.0.0 0.0.0.0
+   ODCHADZAJUCE_ROZHRANIE NEXT_HOP_IP
+
+6. Rozšírený access‐list na R1 LAN rozhranie v smere IN (netreba posielať komunikáciu
+   ďalej cez pomalú linku)
+
+7. Rozšírený access‐list na R1 LAN rozhranie v smere IN (netreba posielať komunikáciu
+   ďalej cez pomalú linku)
+
+8. IPsec tunel medzi R1 a R2, pričom access‐list určujúci komunikáciu, ktorá bude šifrovaná,
+   bude povoľovať iba Telnet, SSH, ICMP a UDP 161/162 bez špecifikovaných IP adries.
+
+9. Windows management konzola, režim tunel (zrkadlová konfigurácia na oboch
+   staniciach), špecifikovať iba ICMP a FTP.
+10. Na oboch stranách na WAN rozhraniach:
+
+   bandwidth 128
+   service‐policy output output_SE
+
+   na DCE strane:
+   clock‐rate 128000
+
+   QoS LLQ konfigurácia:
+   !
+   ip access‐list extended matchGuaranteed
+    permit tcp any any eq telnet
+    permit tcp any eq telnet any
+    permit tcp any any eq 22
+    permit tcp any eq 22 any
+    permit udp any any eq snmp
+    permit udp any eq snmp any
+    permit udp any any eq snmptrap
+    permit udp any eq snmptrap any
+   ip access‐list extended matchPriority
+    permit icmp any any
+   !
+   class‐map match‐all classGuaranteed
+    match access‐group name matchGuaranteed
+   class‐map match‐all classPriority
+    match access‐group name matchPriority
+   !
+   policy‐map output_QE
+    class classPriority
+     priority 16
+    class classGuaranteed
+     bandwidth 48
+    class class‐default
+     fair‐queue
+   policy‐map output_SE
+    class class‐default
+     shape average percent 95
+     service‐policy output_QE
+   !
+
+11. R1:
+   ip access‐list standard allowPC1
+    permit 192.168.100.10
+   !
+   line vty 0 4
+    access‐class allowPC1 in
+    password cisco
+    login
+   line vty 5 14
+    access‐class allowPC1 in
+    password cisco
+    login
+
+
+   R2:
+
+   ip access‐list standard allowPC1
+    permit R1_Loopback100
+   !
+   line vty 0 4
+    access‐class allowPC1 in
+    password cisco
+    login
+   line vty 5 14
+    access‐class allowPC1 in
+    password cisco
+    login
+   !
+
+
+12. R1:
+
+   access‐list 10 permit host 192.168.100.10
+   access‐list 10 permit host PC3
+   access‐list 11 permit host 192.168.100.10
+   !
+   snmp‐server community D105read RO 10
+   snmp‐server community D105write RW 11
+   !
+
+
+   R2:
+   access‐list 10 permit host R1_Loopback100
+   access‐list 10 permit host PC3
+   access‐list 11 permit host R1_Loopback100
+   !
+   snmp‐server community D105read RO 10
+   snmp‐server community D105write RW 11
+   !
+
+
+13. R1:
+
+   logging 192.168.100.10
+   logging source‐interface Loopback0
+   !
+   R2:
+
+   logging R1_Loopback100
+   logging source‐interface Loopback0
+

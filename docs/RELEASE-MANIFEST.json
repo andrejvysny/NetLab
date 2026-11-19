@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "artifactVersion": 5,
+  "htmlSha256": "4b6568759e9f073804d3faae6e1c48ed259eb5b1335c24eedfa5e9aff553dbc1",
+  "htmlBytes": 1588854,
+  "models": [
+    "ISR4331 / 17.03.04a",
+    "C9300L-24T-4G Network Advantage / 17.03.04"
+  ],
+  "automated": {
+    "pass": 896,
+    "fail": 0,
+    "skipped": 0
+  },
+  "referenceCommands": 149,
+  "modelFormProbes": 565,
+  "dispositions": {
+    "isr4331": {
+      "functional": 199,
+      "partial": 17,
+      "display-only": 26,
+      "unsupported": 1,
+      "correct hardware rejection": 12,
+      "ill-formed paper notation": 14,
+      "unresolved": 13
+    },
+    "c9300l": {
+      "functional": 153,
+      "partial": 20,
+      "display-only": 19,
+      "unsupported": 1,
+      "correct hardware rejection": 51,
+      "ill-formed paper notation": 14,
+      "unresolved": 25
+    }
+  },
+  "onPhysicalHardware": false
+}

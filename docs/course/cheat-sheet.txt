@@ -1,0 +1,280 @@
+Test – konfiguračné príkazy     KSS, letný semester, inž.
+
+
+                      Zoznam niektorých konfiguračných príkazov
+Syntax príkazov pre rôzne typy IOS_ov sa môže mierne líšiť.
+V mnohých príkazoch je uvedený iba ich základný tvar, nie sú uvedené všetky možné tvary a prepínače.
+
+   A) Základné konfigurovanie smerovačov
+
+Router>enable
+Router#disable
+Router#configure terminal
+Router(config)#hostname name
+Router(config)#banner motd #message#
+Router(config)#exit
+Router(config-if)#control-z
+
+Router(config)#line vty 0 4
+Router(config-line)#login
+Router(config-line)#password cisco
+
+Router(config)#line con 0
+Router(config-line)#login
+Router(config-line)#password cisco
+Router(config-line)#logging synchronous
+
+
+Router(config)#interface interface
+Router(config-if)#ip address ip-address subnet-mask
+Router(config-if)#description description
+Router(config-if)#no shutdown
+Router(config-if)#clock rate 56000 {DCE interface}
+
+Router(config)#router rip
+Router(config-router)#network network-address
+Router(config-router)#network network-address
+
+Router(config)#router ospf process-id
+Router(config-router)#network network-address wildcard-mask area area-number
+Router(config-router)#network network-address wildcard-mask area area-number
+
+Router(config)#ip route 0.0.0.0 0.0.0.0 ip-address-of-next-hop-router
+Router(config)#ip route network-address subnet-mask ip-address-of-next-hop-router
+
+Router#show ip route
+Router#show ip interface brief
+Router#show controller interface
+Router#show ip protocols
+Router#show version
+Router#show running-config
+Router#copy running-config startup-config
+
+Router#ping ip-address
+Router#trace ip-address
+Router#debug ip rip
+ Pozn.: Vypnúť debug - undebug all
+
+
+
+
+                                                   1
+Test – konfiguračné príkazy        KSS, letný semester, inž.
+
+
+    B) Konfigurovanie ACL
+Router(config)# access-list 1-99 permit|deny source-IP-address wildcard-mask [log]
+
+Router(config)# access-list 100-199 permit|deny IP-protocol source-IP wildcard-mask [source-port]
+               destination-IP wildcard-mask [dest- port] [log]
+
+Router(config)# access-list 100-199 permit|deny tcp|udp source-IP wildcard-mask [operator-source-
+                 port] destination-IP wildcard-mask [operator-dest -port] [established] [log]
+  operator: lt (lower than), gt (greater than), eq (equal), neq (not equal), range (rozsah portov: 0 65535)
+
+Router(config)# access-list 100-199 permit|deny icmp source-IP wildcard-mask destination- IP
+                wildcard mask icmp type | icmp message [log]
+     icmp type je číselná hodnota icmp správy
+     najčastejšie sa zakazuje:ping (echo, echo-reply), redirect, unreachables, traceroute
+
+Router(config-if)# ip access-group ACL number in | out
+Router(config-if)# no ip unreachables
+
+line vty 0 4
+access-class number in
+
+no access-list ACL number
+show access-lists
+
+
+
+
+    C) Konfigurovanie NAT
+
+Router(config)#ip nat inside source static ip-add-local ip-add-global
+Router(config)#ip nat pool pool-name start-ip-add end-ip-add netmask mask
+Router(config)#access-list number permit network-address wildcard-mask
+Router(config)#ip nat inside source list number pool pool-name
+Router(config)#ip nat pool pool-name start-ip-add end-ip-add netmask mask
+Router(config)#access-list number permit network-address wildcard-mask
+Router(config)#ip nat inside source list number pool pool-name overload
+
+Router(config)#ip nat pool pool-name start-ip-add end-ip-add prefix-length bits type rotary
+Router(config)#access-list acl-number permit ip-add-virtual-host {ip-add-virtual-host is the address
+               another host will use to access this server}
+Router(config)#ip nat inside destination list acl-number pool pool-name
+Router(config-if)#ip nat inside
+Router(config-if)#ip nat outside
+
+Router#show ip nat translations
+Router#show ip nat statistics
+Router#debug ip nat
+Router#clear ip nat trans *
+
+
+
+
+                                                      2
+Test – konfiguračné príkazy     KSS, letný semester, inž.
+
+
+   D) Konfigurovanie IPsec
+
+Router(config)# crypto isakmp key key-value address destination-ip-address
+Router(config)# crypto isakmp policy number
+Router(crypto-isakmp)# encryption algorithm
+Router(crypto-isakmp)# hash algorithm
+Router(crypto-isakmp)# authentication method
+Router(crypto-isakmp)# group 1/ group 2     “Key exchange—D-H”
+Router(crypto-isakmp)# lifetime number
+
+Router(config)# crypto ipsec transform-set transform-set-name transform1 transform2….
+Router(cfg-crypto-trans)# mode tunnel/transport
+
+access-list syntax uvedená v časti Konfigurovanie ACL     (“pozn.: konfigurovať symetrické ACL”)
+
+Router(config)#crypto map map-name seq-num ipsec-isakmp
+Router(config-crypto-map)# match address access-list-number
+Router(config-crypto-map)# set peer ip-address
+Router(config-crypto-map)# set transform-set transform-set-name
+Router(config-crypto-map)# set security-association lifetime seconds number
+Router(config-crypto-map)# set security-association lifetime kilobytes number
+
+
+Router(config-if)# crypto map map-name
+Router(config-if)# no crypto map map-name
+
+Router# show crypto isakmp policy
+Router# show crypto isakmp sa
+Router # show crypto ipsec sa
+Router# show crypto ipsec transform-set
+Router# show crypto map
+
+Router# debug crypto isakmp
+Router # debug crypto ipsec
+Router # no debug all
+
+clear crypto sa
+clear crypto isa
+no crypto ipsec sa
+
+
+
+
+                                                    3
+Test – konfiguračné príkazy      KSS, letný semester, inž.
+
+
+    E) Konfigurovanie QoS
+
+Router(config)#priority-list list-number protocol protocol-name {high | medium | normal | low}
+                 list ACL-number
+Router(config)#priority-list list-number queue-limit [high-limit [medium-limit [normal-limit [low-
+                 limit]]]
+Router(config-if)#priority-group list-number
+Router# show queueing priority
+
+Router(config)#queue-list list-number protocol protocol-name queue-number list ACL-number
+Router(config)# queue-list list-number queue queue-number limit limit-number
+Router(config)# queue-list list-number queue queue-number byte-count byte-count-number
+Router(config-if)#custom-queue-list list-number
+Router# show queueing custom
+
+
+Router(config-if)# no fair-queue
+Router(config-if)# fair-queue
+Router(config-if)# fair-queue [congestive-discard-threshold [dynamic-queues [reservable-queues]]]
+Router# show queueing fair
+
+Router(config)#class-map [match-all | match-any] class-map-name
+Router(config-cmap)#match access-group ACL-number
+Router(config)# policy-map policy-map-name
+Router(config-pmap)# class class-map-name
+Router(config-pmap-c)# priority bandwidth
+Router(config-pmap-c)# priority kpbs [bytes]
+Router(config-pmap-c)# priority percent percent
+Router(config-pmap)# class class-default
+Router(config-pmap-c)# fair-queue
+Router(config-pmap-c)# queue-limit pnumber-of-packets
+Router(config-if)# service_policy output policy-map-name
+Router# show class-map
+Router# show policy-map
+
+
+
+
+    F) Konfigurovanie DHCP
+
+Router(config)# ip dhcp pool name
+Router(dhcp-config)#network network-addressr [mask | prefix-length]
+Router(dhcp-config)#default-router ip-address
+
+Router(config)#ip dhcp excluded-address low-address [high-address]
+
+Router(config-if)#ip helper-address ip-address
+
+
+Router(config)# no ip dhcp pool name
+
+
+
+
+                                                    4
+Test – konfiguračné príkazy      KSS, letný semester, inž.
+
+
+
+    G) Konfigurovanie sieťového manažmentu
+
+ALIAS
+
+Router#alias exec shortcut command
+Router#show aliases
+
+
+MENU
+Router#menu name text item text
+Router#menu name command item command
+
+
+SYSLOG Server logging
+
+Router(config)#logging ip-address-of- syslog-server
+Router(config)# logging source-interface interface-type interface-number
+Router(config)#logging trap severity-level
+     Pozn.: severity-level: number or the keyword
+      napr.
+        Router(config)#logging trap debugging
+        Router(config)#logging trap warnings
+        Router(config)#logging trap errors
+
+Router(config)# no logging source-interface
+Router(config)#no logging trap
+
+
+SNMP
+
+access-list syntax uvedená v časti Konfigurovanie ACL
+
+Router(config)#snmp-server community community-name [ro | rw] [ACL-number ]
+
+Router(config)#snmp-server view view-name oid-tree {included | excluded}
+Router(config)#snmp-server community community-name [view view-name ] [ro | rw] [ACL-number]
+
+Router(config)#snmp-server location text
+Router(config)#snmp-server contact text
+Router(config)#snmp-server packetsize byte-count
+Router(config)#snmp-server ifindex persist
+Router(config)#snmp-server system-shutdown
+
+Router(config)#snmp-server host host-id [traps | informs][version {1 | 2c | 3 [auth | noauth | priv]} ]
+               community-name
+         Pozn.: [traps | informs] – predvolené je traps
+                [auth | noauth | priv]} – len pre verziu 3
+
+Router(config)#snmp-server trap-source interface
+Router(config)# snmp-server enable traps [notification-type [notification-options]]
+
+Router(config)# no snmp-server
+                                                     5
+

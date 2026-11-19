@@ -1,0 +1,38 @@
+Chrome/157.0.8103.78 | /agent/workspace/kss-netlab/dist/index.html | sha256 4b6568759e9f073804d3faae6e1c48ed259eb5b1335c24eedfa5e9aff553dbc1
+1440x900
+  ✓ guided mode opens Steps, locks later steps and permits Tools
+  ✓ PC3: native double-click before and after single-click selection; label stays hit-testable
+  ✓ PC3: click-only activation and Space select; Enter opens
+  ✓ R2: native double-click before and after single-click selection; label stays hit-testable
+  ✓ uncabled console and config both denied; real console, Ethernet and serial drags (DCE choice)
+  ✓ router opens on native double-click; setup NO/RETURN; EXEC → enable → global → interface → exit/Ctrl+Z; startup copied
+  ✓ Windows CMD ipconfig and macOS shell ifconfig respond after native double-click
+  ✓ browser chooser: cancel/accept import, invalid atomic replace, valid replace, real byte-checked export, startup unchanged, IOS prompt refresh
+  ✓ active console closes when unplugged; reopening without the cable is denied
+  ✓ exam clock expiry notifies and does not grade (315 s virtual time under CDP)
+  ✓ exam Tools/Check/Steps absent; strict cabling/WAN QoS settings locked; timer hide/show; cancel, manually grade and reopen 0/18 report
+  runtime: 0 errors, 0 warnings, 0 failed network requests, 0 HTTP errors; offline-intercepted origins: none
+1280x800
+  ✓ guided mode opens Steps, locks later steps and permits Tools
+  ✓ PC3: native double-click before and after single-click selection; label stays hit-testable
+  ✓ PC3: click-only activation and Space select; Enter opens
+  ✓ R2: native double-click before and after single-click selection; label stays hit-testable
+  ✓ uncabled console and config both denied; real console, Ethernet and serial drags (DCE choice)
+  ✓ router opens on native double-click; setup NO/RETURN; EXEC → enable → global → interface → exit/Ctrl+Z; startup copied
+  ✓ Windows CMD ipconfig and macOS shell ifconfig respond after native double-click
+  ✓ browser chooser: cancel/accept import, invalid atomic replace, valid replace, real byte-checked export, startup unchanged, IOS prompt refresh
+  ✓ active console closes when unplugged; reopening without the cable is denied
+  ✓ exam Tools/Check/Steps absent; strict cabling/WAN QoS settings locked; timer hide/show; cancel, manually grade and reopen 0/18 report
+  runtime: 0 errors, 0 warnings, 0 failed network requests, 0 HTTP errors; offline-intercepted origins: none
+1024x768
+  ✓ guided mode opens Steps, locks later steps and permits Tools
+  ✓ PC3: native double-click before and after single-click selection; label stays hit-testable
+  ✓ PC3: click-only activation and Space select; Enter opens
+  ✓ R2: native double-click before and after single-click selection; label stays hit-testable
+  ✓ uncabled console and config both denied; real console, Ethernet and serial drags (DCE choice)
+  ✓ router opens on native double-click; setup NO/RETURN; EXEC → enable → global → interface → exit/Ctrl+Z; startup copied
+  ✓ Windows CMD ipconfig and macOS shell ifconfig respond after native double-click
+  ✓ browser chooser: cancel/accept import, invalid atomic replace, valid replace, real byte-checked export, startup unchanged, IOS prompt refresh
+  ✓ active console closes when unplugged; reopening without the cable is denied
+  ✓ exam Tools/Check/Steps absent; strict cabling/WAN QoS settings locked; timer hide/show; cancel, manually grade and reopen 0/18 report
+  runtime: 0 errors, 0 warnings, 0 failed network requests, 0 HTTP errors; offline-intercepted origins: none
