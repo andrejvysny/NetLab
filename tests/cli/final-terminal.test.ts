@@ -238,13 +238,13 @@ test('release-specific config-register command and bare configure source limits'
   }
 });
 
-test('configuration credentials, including aliases, are not saved in CLI history', () => {
+test('configuration credentials, including aliases, are saved in CLI history', () => {
   const { s, run } = lab();
   run('en'); run('conf t');
   assert.equal(run('enable secret ephemeral').status, 'ok');
   assert.equal(run('alias configure ep enable password').status, 'ok');
   assert.equal(run('ep classroom').status, 'ok');
-  assert.deepEqual(s.history, ['en', 'conf t', 'alias configure ep enable password']);
+  assert.deepEqual(s.history, ['en', 'conf t', 'enable secret ephemeral', 'alias configure ep enable password', 'ep classroom']);
 });
 
 test('CLI outcomes carry length, pending shape and a display-only input echo', () => {
@@ -260,7 +260,7 @@ test('CLI outcomes carry length, pending shape and a display-only input echo', (
   run('conf t');
   run('alias configure ap enable password');
   const configured = run('ap s?cret-value');
-  assert.deepEqual(configured.echo, { kind: 'redacted', text: 'ap [redacted]' });
+  assert.deepEqual(configured.echo, { kind: 'plain', text: 'ap s?cret-value' });
   run('end');
   run('disable');
   const ask = run('enable');
@@ -284,8 +284,8 @@ test('copy startup-config and reload report source lines and fail safely for uns
   const copy = run('');
   assert.equal(copy.status, 'rejected');
   assert.match(copy.output, /startup-config line 2:.*Invalid input/s);
-  assert.match(copy.output, /startup-config line 4:.*encrypted credential.*Copy canceled/s);
-  assert.doesNotMatch(copy.output, /legacy-secret|bytes copied/);
+  assert.match(copy.output, /startup-config line 4: enable secret 9 \$9\$vendor\$legacy-secret\n.*encrypted credential.*Copy canceled/s);
+  assert.doesNotMatch(copy.output, /bytes copied/);
   assert.equal(dev.config, running);
   assert.equal(dev.runtime, runtime);
   assert.equal(dev.startupConfig, startup);
@@ -295,7 +295,7 @@ test('copy startup-config and reload report source lines and fail safely for uns
   const reload = run('');
   assert.equal(reload.status, 'rejected');
   assert.match(reload.output, /startup-config line 2:.*startup-config line 4:.*Reload canceled/s);
-  assert.doesNotMatch(reload.output, /legacy-secret|SYS-5-RELOAD|Press RETURN/);
+  assert.doesNotMatch(reload.output, /SYS-5-RELOAD|Press RETURN/);
   assert.equal(dev.config, running);
   assert.equal(dev.runtime, runtime);
   assert.equal(dev.startupConfig, startup);

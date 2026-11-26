@@ -208,16 +208,15 @@ test('bulk console paste keeps blank confirmation lines, checks copied prompts, 
   assert.match(term.plainText(), /Paste stopped here/);
 });
 
-test('credential-setting commands are not recalled or echoed by the workbench', () => {
+test('credential-setting commands are echoed, recalled and journaled as typed; password prompts stay hidden', () => {
   const { lab, registry } = setup();
   plugConsole(lab, 'PC1', 'R1');
   const term = connect(lab, registry, 'R1');
   send(term, 'no', 'enable', 'configure terminal', 'ena sec fake-console-value', 'end');
   const sid = term.session!.id;
-  assert.doesNotMatch(JSON.stringify(lab.sessionHistory(sid)), /fake-console-value/);
-  assert.doesNotMatch(term.plainText(), /fake-console-value/);
-  assert.doesNotMatch(JSON.stringify(lab.getState().journal), /fake-console-value/);
-  assert.match(term.plainText(), /ena sec \[redacted\]/);
+  assert.ok(lab.sessionHistory(sid).includes('ena sec fake-console-value'));
+  assert.match(term.plainText(), /Router\(config\)#ena sec fake-console-value/);
+  assert.match(JSON.stringify(lab.getState().journal), /ena sec fake-console-value/);
   send(term, 'disable');
   term.paste('enable\nfake-console-value\n');
   assert.equal(term.secret, true);
@@ -225,7 +224,7 @@ test('credential-setting commands are not recalled or echoed by the workbench', 
   assert.match(term.plainText(), /Paste stopped here/);
   send(term, 'fake-console-value');
   assert.equal(term.prompt, 'Router#');
-  assert.doesNotMatch(term.plainText(), /fake-console-value/);
+  assert.equal(term.plainText().match(/fake-console-value/g)?.length, 1, 'only the config line, not the password reply');
 });
 
 test('authoritative console pager follows line defaults, aliases, do and reload', () => {
@@ -285,7 +284,8 @@ test('pending text and credentials are not CLI command prompts, even with an emp
   term.enter();
   assert.equal(term.prompt, 'Router#');
   assert.equal(term.pendingInput, null);
-  assert.doesNotMatch(term.plainText(), /hidden\?login|unsent/);
+  assert.doesNotMatch(term.plainText(), /unsent/);
+  assert.equal(term.plainText().match(/hidden\?login/g)?.length, 1, 'only the config line, not the password reply');
   assert.match(lab.getConfigText('R1', 'running'), /Banner\?/);
 });
 
@@ -306,24 +306,38 @@ test('paste distinguishes a command rejection from the same text in successful I
   assert.equal(lab.sessionExec(sid, 'do show running-config').status, 'ok');
 });
 
-test('custom credential aliases use safe preview, rejected echo, help, history and journal', () => {
+test('crypto isakmp key is shown in full while typing and after Enter', () => {
+  const { lab, registry } = setup();
+  plugConsole(lab, 'PC1', 'R1');
+  const term = connect(lab, registry, 'R1');
+  send(term, 'no', 'enable', 'configure terminal');
+  const typed = 'crypto isakmp key cisco123 address 60.50.30.2';
+  term.setLine(typed, typed.length);
+  assert.deepEqual(term.inputEcho(), { kind: 'plain', text: typed });
+  term.enter();
+  assert.match(term.plainText(), /Router\(config\)#crypto isakmp key cisco123 address 60\.50\.30\.2$/m);
+  assert.match(lab.getConfigText('R1', 'running'), /crypto isakmp key cisco123 address 60\.50\.30\.2/);
+});
+
+test('custom credential aliases echo, help, history and journal show the text as typed', () => {
   const { lab, registry } = setup();
   plugConsole(lab, 'PC1', 'R1');
   const term = connect(lab, registry, 'R1');
   send(term, 'no', 'enable', 'configure terminal', 'alias configure pwd enable secret', 'alias configure embedded enable password embedded-value');
   term.setLine('pwd alias-argument', 18);
-  assert.deepEqual(term.inputEcho(), { kind: 'redacted', text: 'pwd [redacted]' });
-  assert.match(term.plainText(), /\[Input redacted\] Router\(config\)#pwd \[redacted\]/);
+  assert.deepEqual(term.inputEcho(), { kind: 'plain', text: 'pwd alias-argument' });
+  assert.match(term.plainText(), /Router\(config\)#pwd alias-argument$/);
   term.enter();
   send(term, 'embedded', 'end', 'show aliases configure');
+  assert.match(term.plainText(), /embedded {14}enable password embedded-value/);
   const sid = term.session!.id;
   assert.match(lab.getConfigText('R1', 'running'), /enable secret 9 \$9\$sim\$/);
   send(term, 'configure terminal');
-  assert.doesNotMatch(lab.sessionHelp(sid, 'embedded'), /embedded-value/);
   const rejected = lab.sessionExec(sid, 'pwd 9 $9$unsupported$hash-value');
   assert.equal(rejected.status, 'rejected');
-  assert.deepEqual(rejected.echo, { kind: 'redacted', text: 'pwd [redacted]' });
-  assert.doesNotMatch(JSON.stringify({ rejected, screen: term.plainText(), history: lab.sessionHistory(sid), journal: lab.getState().journal }), /alias-argument|embedded-value|hash-value/);
+  assert.deepEqual(rejected.echo, { kind: 'plain', text: 'pwd 9 $9$unsupported$hash-value' });
+  assert.ok(lab.sessionHistory(sid).includes('pwd alias-argument'));
+  assert.match(JSON.stringify(lab.getState().journal), /pwd alias-argument/);
 });
 
 test('failed imported startup copy and VTY reload retain running state and console/Telnet sessions', () => {
@@ -345,7 +359,9 @@ test('failed imported startup copy and VTY reload retain running state and conso
   assert.equal(cmd.session?.kind, 'telnet');
   assert.equal(con.prompt, 'R2#');
   assert.match(cmd.plainText(), /startup-config line 2:.*startup-config line 4:.*Reload canceled/s);
-  assert.doesNotMatch(cmd.plainText() + con.plainText(), /saved-toy-value|fake-enable-pw|SYS-5-RELOAD|NeverCommitted/);
+  assert.match(con.plainText(), /startup-config line 4: enable secret 9 \$9\$legacy\$saved-toy-value/);
+  assert.doesNotMatch(cmd.plainText(), /fake-enable-pw/, 'password replies are not echoed');
+  assert.doesNotMatch(cmd.plainText() + con.plainText(), /SYS-5-RELOAD|NeverCommitted/);
   assert.match(lab.getConfigText('R2', 'running'), /hostname R2/);
 });
 

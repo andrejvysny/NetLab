@@ -415,11 +415,11 @@ test('configuration files never run EXEC actions or swallow the line after an in
   assert.equal(d.config.hostname, 'StillHere');
 });
 
-test('configuration files reject unsupported encrypted credentials without echoing the material', () => {
+test('configuration files reject unsupported encrypted credentials and show the line as typed', () => {
   const w = routerWorld();
   const r = applyConfigText(w, 'r1', 'enable secret 9 $9$synthetic-unusable\nhostname Allowed\n', 'merge');
   assert.match(r.lines[0].output, /encrypted credential is not supported/);
-  assert.doesNotMatch(JSON.stringify(r), /synthetic-unusable/);
+  assert.equal(r.lines[0].line, 'enable secret 9 $9$synthetic-unusable');
   assert.equal(getIos(w, 'r1').config.enableSecret, undefined);
   assert.equal(getIos(w, 'r1').config.hostname, 'Allowed');
 });

@@ -14,7 +14,7 @@
  */
 import type { DeviceKind, Feature, InterfaceConfig, IosDevice, World } from '../types.ts';
 import { isIp, parseIfName, parsePort } from '../ip.ts';
-import { REDACTED, redactCredentialLine, unsupportedCredentialType } from '../config/credentials.ts';
+import { unsupportedCredentialType } from '../config/credentials.ts';
 import { getIos } from '../world.ts';
 
 // ───────────────────────────── Modes ─────────────────────────────
@@ -82,7 +82,7 @@ export function pendingInputView(session: CliSession): PendingInputView | null {
   if (session.closed || !p) return null;
   return { kind: p.secret ? 'password' : p.response ?? 'text', paste: !p.secret && p.paste === 'allow' ? 'allow' : 'manual' };
 }
-export type InputEcho = { kind: 'plain' | 'redacted'; text: string } | { kind: 'hidden' };
+export type InputEcho = { kind: 'plain'; text: string } | { kind: 'hidden' };
 
 export type ExecStatus = 'ok' | 'invalid' | 'incomplete' | 'ambiguous' | 'rejected' | 'empty' | 'pending';
 export interface ExecOutcome {
@@ -400,21 +400,12 @@ function prepareLine(dev: IosDevice, mode: ModeName, raw: string): PreparedLine 
   };
 }
 
-function commandEcho(raw: string, prep: PreparedLine): InputEcho {
-  // Use the same single expansion as execution, but never send the expansion to the display/history.
-  if (prep.aliasLength && redactCredentialLine(prep.line) !== prep.line) {
-    return { kind: 'redacted', text: `${raw.slice(0, prep.inputColumn(prep.aliasLength))} ${REDACTED}` };
-  }
-  const display = redactCredentialLine(raw);
-  return display === raw ? { kind: 'plain', text: raw } : { kind: 'redacted', text: display };
-}
-
 /** Side-effect-free classification for pending UI input, guide denials and legacy journal entries. */
 export function inspectInput(dev: IosDevice, session: Pick<CliSession, 'mode' | 'pending' | 'closed'>, raw: string): { echo: InputEcho; unsupportedCredential: boolean } {
   if (session.closed || session.pending?.secret) return { echo: { kind: 'hidden' }, unsupportedCredential: false };
   if (session.pending) return { echo: { kind: 'plain', text: raw }, unsupportedCredential: false };
   const prep = prepareLine(dev, session.mode, raw);
-  return { echo: commandEcho(raw, prep), unsupportedCredential: CONFIG_MODES.includes(prep.grammarMode) && unsupportedCredentialType(prep.line) };
+  return { echo: { kind: 'plain', text: raw }, unsupportedCredential: CONFIG_MODES.includes(prep.grammarMode) && unsupportedCredentialType(prep.line) };
 }
 
 const FILTERS = ['begin', 'exclude', 'include', 'section'] as const;
@@ -521,15 +512,15 @@ export function execLine(world: World, session: CliSession, raw: string): ExecOu
   const promptLen = promptFor(world, session).length;
   const dev = getIos(world, session.deviceId);
   const r = resolve(world, session, raw);
-  const echo = sink.echo = commandEcho(raw, r);
-  if (echo.kind === 'plain' && session.via !== 'file') {
+  const echo = sink.echo = { kind: 'plain', text: raw };
+  if (session.via !== 'file') {
     session.history.push(trimmed);
     if (session.history.length > 200) session.history.shift();
   }
   if (!r.result.ok) {
     const err = r.result;
     const toks = tokenize(r.line);
-    if (err.error === 'ambiguous') sink.out += `% Ambiguous command:  "${echo.kind === 'hidden' ? REDACTED : echo.text.trim()}"\n`;
+    if (err.error === 'ambiguous') sink.out += `% Ambiguous command:  "${echo.text.trim()}"\n`;
     else if (err.error === 'incomplete') sink.out += '% Incomplete command.\n';
     else if (EXEC_MODES.includes(session.mode) && r.aliasLength === 0 && toks.length === 1 && err.at === toks[0].start && /^[A-Za-z][\w.-]*$/.test(toks[0].text)) {
       // A lone unknown word in EXEC mode is treated as a host name to telnet to.
@@ -591,7 +582,7 @@ function usableShowPipe(root: Node, line: string) {
   if (base.ok && base.kws.has('show')) return pipe;
 }
 function aliasHelp(a: ReturnType<typeof aliasesFor>[number]): string {
-  const command = redactCredentialLine(a.command);
+  const command = a.command;
   return `*${a.name}=${/\s/.test(command) ? `"${command}"` : command}`;
 }
 

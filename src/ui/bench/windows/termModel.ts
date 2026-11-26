@@ -5,16 +5,15 @@
  */
 import type { ExecView, GuideBlock, InputEcho, LabApi, PcExecView, PendingInputView, SessionView } from '../../../engine/labapi.ts';
 import { splitLines } from '../util.ts';
-import { redactCredentialLine, redactPcCommand } from '../../../engine/config/credentials.ts';
 
 export type TermItem =
   | { id: number; t: 'out'; text: string }
   /** A line from the simulator itself, not from the device (connection state, errors). */
   | { id: number; t: 'sys'; text: string }
-  | { id: number; t: 'note' | 'redacted'; text: string }
+  | { id: number; t: 'note'; text: string }
   | { id: number; t: 'guide'; block: GuideBlock; line: string };
 type NewItem =
-  | { t: 'out'; text: string } | { t: 'sys'; text: string } | { t: 'note' | 'redacted'; text: string }
+  | { t: 'out'; text: string } | { t: 'sys'; text: string } | { t: 'note'; text: string }
   | { t: 'guide'; block: GuideBlock; line: string };
 export interface TermChunk { id: number; items: TermItem[] }
 /** idle: no session yet · input: waiting for a line · busy: delay running · more: paused at --More-- · closed: session ended */
@@ -44,7 +43,7 @@ const CHUNK_SIZE = 200;
 const MAX_LINES = 5000;
 const DEFAULT_PAGE = 24;
 // Only legacy views have no status. Real IOS output can contain the same text in a banner or show command.
-const LEGACY_REJECTED = /^\s*%\s*(?:Invalid input detected|Ambiguous command:|Incomplete command\.|Unknown command or computer name|Credential command was rejected|This encrypted credential is not supported|The simulator could not run)/mi;
+const LEGACY_REJECTED = /^\s*%\s*(?:Invalid input detected|Ambiguous command:|Incomplete command\.|Unknown command or computer name|This encrypted credential is not supported|The simulator could not run)/mi;
 const IOS_PROMPT = /^[A-Za-z0-9][\w.\-]*(?:\([\w\-]+\))?[#>]/;
 
 function normExec(v: ExecView | null | undefined, fallbackPrompt: string): NormView {
@@ -174,7 +173,7 @@ export class TermModel {
     this.chunks = chunks;
     this.touch();
   }
-  private push(lines: string[], t: 'out' | 'sys' | 'note' | 'redacted'): void { this.pushItems(lines.map((text) => ({ t, text }))); }
+  private push(lines: string[], t: 'out' | 'sys' | 'note'): void { this.pushItems(lines.map((text) => ({ t, text }))); }
   get isEmpty(): boolean { return this.chunks.length === 0; }
   clear(): void { this.chunks = []; this.lineTotal = 0; this.touch(); }
   plainText(): string {
@@ -182,12 +181,11 @@ export class TermModel {
     for (const c of this.chunks) for (const it of c.items) {
       if (it.t === 'guide') out.push(`[Guide — step ${it.block.stepNo}: ${it.block.stepTitle}] ${it.block.reason}`);
       else if (it.t === 'note') out.push(`[Simulator note] ${it.text}`);
-      else if (it.t === 'redacted') out.push(`[Input redacted] ${it.text}`);
       else out.push(it.text);
     }
     if (this.phase === 'input') {
       const echo = this.inputEcho(this.line);
-      out.push((echo.kind === 'redacted' ? '[Input redacted] ' : '') + this.prompt + echoText(echo));
+      out.push(this.prompt + echoText(echo));
     }
     return out.join('\n');
   }
@@ -359,14 +357,12 @@ export class TermModel {
     if (this.secret) return { kind: 'hidden' };
     if (this.session && this.lab.sessionInputEcho) {
       try { return this.lab.sessionInputEcho(this.session.id, line); }
-      catch { return { kind: 'hidden' }; } // Never re-echo a potentially sensitive line after an unexpected failure.
+      catch { return { kind: 'plain', text: line }; }
     }
-    // Legacy fixture fallback can mask direct IOS forms, but cannot see custom alias definitions.
-    const text = this.session ? redactCredentialLine(line) : redactPcCommand(line);
-    return { kind: text === line ? 'plain' : 'redacted', text };
+    return { kind: 'plain', text: line };
   }
   private pushEcho(echo: InputEcho, suffix = ''): void {
-    this.push([this.prompt + echoText(echo) + suffix], echo.kind === 'redacted' ? 'redacted' : 'out');
+    this.push([this.prompt + echoText(echo) + suffix], 'out');
   }
   private submit(line: string): void {
     const preview = this.inputEcho(line);
@@ -517,7 +513,7 @@ export class TermModel {
       finally { this.executing = false; }
       // The device's answer continues the line that was being typed ("R1(config)#^Z").
       const lines = splitLines(typed + view.output);
-      this.push([lines.shift() ?? typed], echo.kind === 'redacted' ? 'redacted' : 'out');
+      this.push([lines.shift() ?? typed], 'out');
       this.push(lines, 'out');
       this.present({ ...view, output: '' }, '');
     });

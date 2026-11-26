@@ -136,18 +136,17 @@ for (const mode of ['free', 'guided'] as const) {
   });
 }
 
-test('blocked and accepted file credentials are masked in results and in the saved journal', () => {
+test('blocked and accepted file credentials are shown as typed in results and in the saved journal', () => {
   const { lab } = start('mini', 'guided');
   plugConsole(lab, 'PC1', 'R1');
   const blocked = lab.applyConfigText('R1', 'Router(config)#enable secret fixture-only', 'merge');
   assert.ok(blocked.blocked);
-  assert.doesNotMatch(JSON.stringify(blocked), /fixture-only/);
-  assert.doesNotMatch(JSON.stringify(lab.getState().journal), /fixture-only/);
+  assert.match(blocked.blocked.reason, /Router\(config\)#enable secret fixture-only/);
   ok(lab.startScenario('mini', 'free'));
   plugConsole(lab, 'PC1', 'R1');
   const accepted = lab.applyConfigText('R1', 'line vty 0 4\n password fixture-only\n', 'merge');
   assert.equal(accepted.ok, true);
-  assert.doesNotMatch(JSON.stringify(accepted), /fixture-only/);
-  assert.doesNotMatch(JSON.stringify(JSON.parse(lab.exportLab()).journal), /fixture-only/);
+  assert.equal(accepted.lines[1].line, ' password fixture-only');
+  assert.match(JSON.stringify(JSON.parse(lab.exportLab()).journal), /password fixture-only/);
   assert.equal(ios(lab, 'R1').config.lines.vty[0].password, 'fixture-only', 'actual configuration remains usable');
 });

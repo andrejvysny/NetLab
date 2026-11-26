@@ -240,8 +240,7 @@ function unsupportedConfigSource(env: CmdEnv): never {
 function rejectStartup(env: CmdEnv, result: ApplyResult, summary: string): never {
   for (const line of result.lines) {
     if (line.ok) continue;
-    // Print safe diagnostics with a physical source line number, not the saved command text.
-    env.print(line.lineNo > 0 ? `% startup-config line ${line.lineNo}:` : '% startup-config:');
+    env.print(line.lineNo > 0 ? `% startup-config line ${line.lineNo}: ${line.line}` : '% startup-config:');
     if (line.output) env.print(line.output);
   }
   return env.reject(`% ${summary}`);

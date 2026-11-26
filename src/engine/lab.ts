@@ -46,7 +46,7 @@ import {
 } from './cli/index.ts';
 import { PRESS_RETURN } from './cli/commands/exec.ts';
 import { applyConfigText, saveStartupConfig, type ConfigStep } from './config/apply.ts';
-import { REDACTED, redactCredentialLine, redactPcCommand, UNSUPPORTED_CREDENTIAL } from './config/credentials.ts';
+import { UNSUPPORTED_CREDENTIAL } from './config/credentials.ts';
 import { renderConfigLines } from './config/render.ts';
 import { addDevice, cloneWorld, createWorld, isIos, isPc, nextId } from './world.ts';
 import { isIp } from './ip.ts';
@@ -413,7 +413,6 @@ export class Lab implements LabApi {
   private addJournal(run: Run, ...entries: JournalEntry[]): void {
     const clean = entries.map((e) => {
       const c: JournalEntry = { ...e };
-      if (c.via !== 'bench') c.line = c.via === 'pc' ? redactPcCommand(c.line) : redactCredentialLine(c.line);
       if (c.mode === undefined) delete c.mode;
       if (c.blocked === undefined) delete c.blocked;
       if (c.stepId === undefined) delete c.stepId;
@@ -812,7 +811,7 @@ export class Lab implements LabApi {
       const wasPending = !!cli.pending;
       const modeBefore = cli.mode;
       const input = inspectInput(dev, cli, raw);
-      const auditLine = input.echo.kind === 'hidden' ? REDACTED : input.echo.text.trim();
+      const auditLine = input.echo.kind === 'hidden' ? '' : input.echo.text.trim();
       const stopped = (status: 'blocked' | 'rejected', output: string): ExecView => ({
         output, status, echo: input.echo, prompt: this.promptOf(world, cli), secret: !!cli.pending?.secret,
         closed: cli.closed, notes: [], termLength: cli.termLength, pendingInput: pendingInputView(cli),
@@ -853,9 +852,6 @@ export class Lab implements LabApi {
           status: 'rejected', feature: pre.feature, mutated: false, closed: cli.closed, notes: [],
           termLength: cli.termLength, pendingInput: pendingInputView(cli), echo: input.echo,
         };
-      }
-      if (!wasPending && outcome.echo.kind === 'redacted' && !OK_STATUS.has(outcome.status)) {
-        outcome.output = '% Credential command was rejected. Review the arguments.\n';
       }
       if (!wasPending && outcome.status === 'empty' && !early) return this.execView(outcome);
       if (!wasPending && outcome.status !== 'empty') {
@@ -977,8 +973,8 @@ export class Lab implements LabApi {
       const run = this.run;
       if (!run) return [];
       const t = run.telnets.get(sessionId);
-      if (t) return t.cli.history.filter((l) => redactCredentialLine(l) === l);
-      for (const rec of run.consoles.values()) if (rec.id === sessionId && rec.cli) return rec.cli.history.filter((l) => redactCredentialLine(l) === l);
+      if (t) return [...t.cli.history];
+      for (const rec of run.consoles.values()) if (rec.id === sessionId && rec.cli) return [...rec.cli.history];
       return [];
     });
   }
@@ -1212,7 +1208,7 @@ export class Lab implements LabApi {
       const world = run.world;
       const raw = typeof line === 'string' ? line.replace(/[\r\n]+/g, ' ') : '';
       const typed = raw.trim();
-      const auditLine = redactPcCommand(typed);
+      const auditLine = typed;
       if (!typed) return { output: '' };
       const no = this.refusal(run, 'pc', [pcId]);
       if (no && this.pcCommandChangesNic(world, pcId, raw)) {
@@ -1267,7 +1263,7 @@ export class Lab implements LabApi {
       if (op === 'set' && typeof req.value !== 'string') return { ok: false, text: 'Type the new value for the set request.' };
       const world = run.world;
       const request = { host, community, op, oid, value: op === 'set' ? req.value : undefined } as const;
-      const line = `snmp${op} -c ${REDACTED} ${host} ${oid}${op === 'set' ? ` = ${req.value}` : ''}`;
+      const line = `snmp${op} -c ${community} ${host} ${oid}${op === 'set' ? ` = ${req.value}` : ''}`;
       let target: string | undefined;
       if (run.mode === 'guided' && op === 'set') {
         const copy = cloneWorld(world);
@@ -1641,20 +1637,7 @@ export class Lab implements LabApi {
       startedAt: this.freshStart(this.now() - lab.elapsedMs),
       timerMinutes: lab.timerMinutes, finished: lab.finished,
       hintSteps: lab.hintSteps.filter((h) => stepIds.has(h)),
-      world, journal: lab.journal.map((e) => {
-        if (e.via === 'bench') return { ...e };
-        if (e.via === 'pc') return { ...e, line: redactPcCommand(e.line) };
-        const dev = world.devices[e.deviceId];
-        const direct = redactCredentialLine(e.line);
-        if (!isIos(dev) || direct !== e.line) return { ...e, line: direct };
-        const modes = e.mode ? [e.mode as CliSession['mode']] : (['priv', 'config', 'config-if'] as const);
-        // Old journals did not store the resolved command. Use aliases still present in the saved configuration.
-        for (const mode of modes) {
-          const { echo } = inspectInput(dev, { mode, closed: false }, e.line.trimStart());
-          if (echo.kind === 'redacted') return { ...e, line: echo.text };
-        }
-        return { ...e };
-      }), report: lab.report ? structuredClone(lab.report) : null,
+      world, journal: lab.journal.map((e) => ({ ...e })), report: lab.report ? structuredClone(lab.report) : null,
       progress: {}, reached: Math.max(0, Math.floor(lab.guideReached) || 0), progressDirty: false, progressCost: 0, progressKey: '', progressReadsJournal: true,
       dhcpClients, consoles: new Map(), telnets: new Map(),
     };

@@ -25,7 +25,6 @@ export function GuideCard({ block, line, dark }: { block: GuideBlock; line?: str
 function ItemView({ item }: { item: TermItem }) {
   switch (item.t) {
     case 'out': return <div className="wb-tl">{item.text || '\u200b'}</div>;
-    case 'redacted': return <div className="wb-tl wb-tl--sys"><span className="wb-tl-tag">Input redacted by Workbench</span> {item.text}</div>;
     case 'sys': return <div className="wb-tl wb-tl--sys">{item.text || '\u200b'}</div>;
     case 'note': return <div className="wb-tl wb-tl--note"><span className="wb-tl-tag">Simulator note</span> {item.text}</div>;
     case 'guide': return <GuideCard block={item.block} line={item.line} dark />;
@@ -208,7 +207,6 @@ export function TerminalView({ model, variant = 'ios', focusToken, visible = tru
     phase === 'more' ? 'Paused at --More--' : phase === 'busy' ? 'Waiting… press any key to skip' :
     phase === 'closed' ? 'Session closed' : phase === 'idle' ? 'Not connected' :
     secret ? 'Password: typing is hidden' :
-    echo.kind === 'redacted' ? 'Workbench hides credential text' :
     pendingInput ? (pendingInput.kind === 'confirm' ? 'Waiting for confirmation' : 'Waiting for a reply') :
     model.session ? (model.session.kind === 'telnet' ? sessionTitle || 'Telnet session' : 'Console session · connected') : 'Command prompt';
 
@@ -249,7 +247,7 @@ export function TerminalView({ model, variant = 'ios', focusToken, visible = tru
         <input
           ref={input}
           className="wb-term-input"
-          type={secret || echo.kind === 'redacted' ? 'password' : 'text'}
+          type={secret ? 'password' : 'text'}
           value={phase === 'input' ? line : ''}
           aria-label={`${label}. ${phase === 'more' ? 'Output is paused. Press Space for the next page, Enter for one line or Q to stop.' :
             secret ? 'Type the hidden password and press Enter.' : pendingInput ? 'Type a reply and press Enter.' :

@@ -192,10 +192,10 @@ test('pcSnmp sends a request through the network and validates its input', () =>
   assert.equal(ios(lab, 'R2').config.snmp.location, 'Lab D105');
   const j = lab.getState().journal.filter((e) => e.via === 'pc');
   assert.deepEqual(j.map((e) => [e.line, e.feature, e.ok]), [
-    ['snmpget -c [redacted] 10.0.12.2 sysName.0', 'verify', true],
-    ['snmpget -c [redacted] 10.0.12.2 sysName.0', 'verify', false],
-    ['snmpset -c [redacted] 10.0.12.2 sysLocation.0 = Lab D105', 'verify', false],
-    ['snmpset -c [redacted] 10.0.12.2 sysLocation.0 = Lab D105', 'snmp', true],
+    ['snmpget -c public 10.0.12.2 sysName.0', 'verify', true],
+    ['snmpget -c wrong 10.0.12.2 sysName.0', 'verify', false],
+    ['snmpset -c public 10.0.12.2 sysLocation.0 = Lab D105', 'verify', false],
+    ['snmpset -c secret 10.0.12.2 sysLocation.0 = Lab D105', 'snmp', true],
   ]);
   const s = lab.getState();
   assert.match(lab.pcSnmp('PC1', { host: 'r2', community: 'public', op: 'get', oid: 'sysName.0' }).text, /"r2" is not an IP address/);
@@ -230,7 +230,7 @@ test('guided SNMP SET is gated on the receiving device; GET remains a verificati
   assert.equal(ios(lab, 'R2').config.snmp.location, undefined);
   const last = lab.getState().journal.at(-1)!;
   assert.deepEqual([last.deviceId, last.feature, last.mutated, last.blocked], ['R2', 'snmp', false, true]);
-  assert.doesNotMatch(last.line, /lab-only-community/);
+  assert.equal(last.line, 'snmpset -c lab-only-community 10.0.12.2 sysLocation.0 = synthetic new location');
 });
 
 test('Windows shell only stops or starts the DHCP client for actual ipconfig actions', () => {

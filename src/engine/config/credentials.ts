@@ -1,5 +1,4 @@
-/** Pure display-only masking for command transcripts. Never pass the returned text back to the parser. */
-export const REDACTED = '[redacted]';
+/** Recognises inline IOS credential commands so unsupported secret formats can be refused. */
 const IOS_PROMPT = /^[A-Za-z0-9][\w.\-]*(?:\([\w\-]+\))?[#>]\s*/;
 
 interface Credential { word: 'password' | 'secret' | 'key' | 'community' | 'host'; start: number; text: string }
@@ -35,11 +34,6 @@ function credential(line: string): Credential | undefined {
   return undefined;
 }
 
-export function redactCredentialLine(line: string): string {
-  const c = credential(line);
-  return c ? line.slice(0, c.start) + REDACTED : line;
-}
-
 /** Warn about imported secrets for which the simulator cannot perform the real authentication. */
 export function unsupportedCredentialType(line: string): boolean {
   const c = credential(line);
@@ -55,10 +49,3 @@ export function unsupportedCredentialType(line: string): boolean {
   return false;
 }
 export const UNSUPPORTED_CREDENTIAL = '% This encrypted credential is not supported by the simulator. Use a new lab-only credential, not a real password or key.\n';
-
-/** Lab-only command masking also covers shell options that can carry credentials. */
-export function redactPcCommand(line: string): string {
-  return line.replace(/^(\s*(?:snmpget|snmpset)\b.*?\s-c\s+)\S+/i, `$1${REDACTED}`)
-    .replace(/^(\s*(?:curl(?:\.exe)?|getmac(?:\.exe)?)\b.*?\s(?:-u|--user|\/p)\s+)(?:"[^"]*"|'[^']*'|\S+)/i, `$1${REDACTED}`)
-    .replace(/(https?:\/\/)[^/\s@]+@/ig, `$1${REDACTED}@`);
-}

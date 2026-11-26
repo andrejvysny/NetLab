@@ -3,7 +3,6 @@
  * show inventory, show platform, show flash:, show license, show aliases, show debugging, show privilege, show sessions.
  * CDP neighbours and ARP entries are derived from the cabling and the interface state (no protocol timers).
  */
-import { redactCredentialLine } from '../../config/credentials.ts';
 import type { CliSession } from '../framework.ts';
 import type { IosDevice, World } from '../../types.ts';
 import { MODEL_INFO, networkLicenseFor } from '../../world.ts';
@@ -425,7 +424,7 @@ export function showAliases(dev: IosDevice, mode?: string): string {
   const sections: [string, string][] = [['exec', 'Exec mode aliases:'], ['configure', 'Global configuration mode aliases:'], ['interface', 'Interface configuration mode aliases:']];
   for (const [m, title] of sections) {
     if (mode && m !== mode) continue;
-    const mine = dev.config.aliases.filter((a) => a.mode === m).map((a) => [a.name, redactCredentialLine(a.command)] as [string, string]);
+    const mine = dev.config.aliases.filter((a) => a.mode === m).map((a) => [a.name, a.command] as [string, string]);
     const list = m === 'exec' ? [...DEFAULT_ALIASES.filter(([n]) => !mine.some(([x]) => x === n)), ...mine] : mine;
     if (!list.length) continue;
     out.push(title);

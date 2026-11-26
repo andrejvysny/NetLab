@@ -9,10 +9,10 @@
  */
 import type { Feature, IosDevice, World } from '../types.ts';
 import type { CliSession, ExecOutcome } from '../cli/framework.ts';
-import { execLine, inspectInput, installCli, startSession } from '../cli/index.ts';
+import { execLine, installCli, startSession } from '../cli/index.ts';
 import { cloneWorld, defaultIosConfig, emptyRuntime, isIos } from '../world.ts';
 import { renderRunningConfig, simSecretDecode, type7Decode } from './render.ts';
-import { redactCredentialLine, unsupportedCredentialType, UNSUPPORTED_CREDENTIAL } from './credentials.ts';
+import { unsupportedCredentialType, UNSUPPORTED_CREDENTIAL } from './credentials.ts';
 
 export interface ApplyLine { lineNo: number; line: string; ok: boolean; output: string }
 export interface ApplyResult { ok: boolean; applied: number; failed: number; lines: ApplyLine[]; message?: string }
@@ -179,13 +179,6 @@ export function configurationAlias(device: IosDevice, mode: CliSession['mode'], 
   return alias && first ? (alias.command + cmd.slice(first.length)).trim() : cmd;
 }
 
-export function auditConfigCommand(device: IosDevice, mode: CliSession['mode'], original: string, raw: string): string {
-  const direct = redactCredentialLine(original);
-  if (direct !== original) return direct;
-  const { echo } = inspectInput(device, { mode, closed: false }, raw);
-  return echo.kind === 'redacted' ? echo.text : original;
-}
-
 function fileCommandProblem(command: string): string | undefined {
   if (/^do(?:\s|$)/i.test(command)) return '% EXEC commands are not run from a configuration file. Use the terminal.\n';
   if (unsupportedCredentialType(command)) return UNSUPPORTED_CREDENTIAL;
@@ -243,7 +236,7 @@ function applyInternal(world: World, deviceId: string, text: string, opts: Apply
       const problem = pl.error ?? (rejectedBlock ? '% The block header was rejected; this line was not run.\n' : undefined) ?? (pl.promptMode && pl.promptMode !== mode
         ? `% Pasted prompt expects ${pl.promptMode}, but the file is in ${mode}. Select the block before its commands.\n`
         : fileProblem(device, session, pl.command));
-      const line = auditConfigCommand(device, mode, pl.original, pl.command);
+      const line = pl.original;
       let out = problem ? { error: problem } : runOne(world, session, pl.command);
       if (!('error' in out) && PARSE_FAIL.has(out.status)) {
         for (const v of variantsOf(pl.command)) {
@@ -260,10 +253,7 @@ function applyInternal(world: World, deviceId: string, text: string, opts: Apply
         output = '% This line requires interactive input. Use the terminal or specify all arguments in the file.\n';
       }
       const ok = !pending && !('error' in out) && OK_STATUS.has(out.status);
-      const sensitive = line !== pl.original;
       if (!ok) {
-        if (sensitive && !problem && !pending) output = '% Credential command was rejected. Review the arguments in the editor.\n';
-        // Keep the source line number, but never keep a secret in the file report or journal.
         fail(pl.lineNo, line, output);
         if (!pl.indented) { resetMode(session); rejectedBlock = true; }
       } else {
